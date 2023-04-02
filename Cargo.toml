@@ -2,6 +2,8 @@
 name = "br2-utils"
 version = "0.1.1"
 edition = "2021"
+authors = ["Eric Le Bihan <eric.le.bihan.dev@free.fr>"]
+license = "MIT"
 
 [dependencies]
 lazy_static = "1.4.0"
