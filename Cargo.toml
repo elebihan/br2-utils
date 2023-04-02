@@ -10,3 +10,8 @@ thiserror = "1.0.40"
 
 tempdir = "0.3.7"
 walkdir = "2.3.3"
+clap = { version = "4.2.1", features = ["derive"] }
+anyhow = "1.0.70"
+
+[[bin]]
+name = "br2-clerk"
