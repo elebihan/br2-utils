@@ -17,10 +17,20 @@ struct ListArgs {
     object: commands::Object,
 }
 
+#[derive(Debug, Args)]
+struct BumpArgs {
+    #[arg(help = "Name of the package to bump")]
+    name: String,
+    #[arg(help = "New version of the package")]
+    version: String,
+}
+
 #[derive(Debug, Subcommand)]
 enum Command {
     #[command(visible_alias = "ls")]
     List(ListArgs),
+    #[command(visible_alias = "b")]
+    Bump(BumpArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -50,6 +60,7 @@ pub fn main() -> Result<()> {
         .with_context(|| "Failed to explore environment")?;
     match args.command {
         Command::List(args) => commands::list(&buildroot, args.object)?,
+        Command::Bump(args) => commands::bump(&buildroot, &args.name, &args.version)?,
     }
     Ok(())
 }
@@ -83,5 +94,10 @@ mod commands {
             println!("{item}");
         }
         Ok(())
+    }
+
+    /// Change the version of package named `name` to `version`.
+    pub fn bump(buildroot: &Buildroot, name: &str, version: &str) -> Result<(), Error> {
+        buildroot.set_package_version(name, version)
     }
 }
