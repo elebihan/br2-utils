@@ -114,7 +114,12 @@ fn is_package(entry: &DirEntry) -> bool {
 impl BuildrootBaseTree {
     fn from_path<P: AsRef<Path>>(path: P) -> Result<BuildrootBaseTree, Error> {
         let path = path.as_ref();
-        let defconfigs = BuildrootBaseTree::collect_defconfigs(path.join("configs"))?;
+        let cfg_dir = path.join("configs");
+        let defconfigs = if cfg_dir.exists() {
+            BuildrootBaseTree::collect_defconfigs(&cfg_dir)?
+        } else {
+            HashMap::new()
+        };
         let packages = BuildrootBaseTree::collect_packages(path.join("package"))?;
         Ok(Self {
             path: path.to_path_buf(),
