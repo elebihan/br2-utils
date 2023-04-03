@@ -51,7 +51,7 @@ impl PackageInfo {
 
     /// Collect package information from a readable object.
     fn from_reader<R: Read>(name: &str, reader: R) -> Result<Self, Error> {
-        let stem = name.to_uppercase().replace('-', "_");
+        let stem = canonicalize(name);
         let prop_names = ["version", "site", "source", "license", "dependencies"];
         let vars_names: Vec<(&str, String)> = prop_names
             .into_iter()
@@ -110,9 +110,13 @@ pub fn set_package_version<P: AsRef<Path>>(path: P, version: &str) -> Result<(),
 }
 
 fn replace_version<'t>(text: &'t str, name: &str, version: &str) -> Cow<'t, str> {
-    let pattern = format!(r"({}_VERSION\s*=\s*)(.+)", name.to_uppercase());
+    let pattern = format!(r"({}_VERSION\s*=\s*)(.+)", canonicalize(name));
     let regex = Regex::new(pattern.as_str()).unwrap();
     regex.replace(text, |caps: &Captures| format!("{}{}", &caps[1], version))
+}
+
+fn canonicalize(name: &str) -> String {
+    name.to_uppercase().replace('-', "_")
 }
 
 #[cfg(test)]
