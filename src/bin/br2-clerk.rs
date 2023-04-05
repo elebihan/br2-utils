@@ -59,8 +59,19 @@ mod topics {
         use clap::{Args, Subcommand};
         use std::collections::BTreeSet;
 
+        #[derive(Debug, Args)]
+        struct GetArgs {
+            #[arg(help = "Name of the defconfig")]
+            name: String,
+            #[arg(help = "Name of the symbol")]
+            symbol: String,
+        }
+
         #[derive(Debug, Subcommand)]
         enum DefconfigCommand {
+            /// Get value of a symbol
+            #[clap(visible_alias = "g")]
+            Get(GetArgs),
             /// List available defconfigs
             #[clap(visible_alias = "ls")]
             List,
@@ -75,6 +86,18 @@ mod topics {
         impl Defconfig {
             pub fn execute(&self, buildroot: &Buildroot) -> Result<(), Error> {
                 match self.command {
+                    DefconfigCommand::Get(ref args) => {
+                        let defconfig = buildroot.get_defconfig(&args.name)?;
+                        let symbol = defconfig
+                            .symbols()
+                            .iter()
+                            .find(|s| s.name == args.symbol)
+                            .ok_or(br2_utils::defconfig::Error::InvalidSymbol(
+                                "unknown".to_string(),
+                            ))?;
+                        println!("{}", symbol.value);
+                        Ok(())
+                    }
                     DefconfigCommand::List => {
                         let items: BTreeSet<&String> =
                             buildroot.defconfigs().map(|(n, _)| n).collect();
