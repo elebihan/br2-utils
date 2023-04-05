@@ -242,6 +242,27 @@ impl Buildroot {
             .ok_or(Error::UnknownDefconfig(name.to_string()))
             .and_then(|(_, p)| Ok(defconfig::Defconfig::from_path(p)?))
     }
+
+    /// Build an embedded system using a defconfig
+    pub fn build_defconfig<P: AsRef<Path>>(&self, name: &str, output: P) -> Result<bool, Error> {
+        let input = self.main_tree_path();
+        let status = std::process::Command::new("make")
+            .arg(format!("O={}", output.as_ref().display()))
+            .arg("-C")
+            .arg(input.as_os_str())
+            .arg(name)
+            .status()?;
+        Ok(status.success())
+    }
+
+    /// Return the path to the main tree
+    fn main_tree_path(&self) -> &Path {
+        if let BuildrootTree::Main(m) = &self.trees[0] {
+            m.path.as_path()
+        } else {
+            unreachable!()
+        }
+    }
 }
 
 #[derive(Debug)]
