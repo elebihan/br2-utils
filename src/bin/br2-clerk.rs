@@ -61,6 +61,7 @@ mod topics {
 
         #[derive(Debug, Subcommand)]
         enum DefconfigCommand {
+            /// List available defconfigs
             #[clap(visible_alias = "ls")]
             List,
         }
@@ -108,8 +109,10 @@ mod topics {
 
         #[derive(Debug, Subcommand)]
         enum PackageCommand {
+            /// List available packages
             #[clap(visible_alias = "ls")]
             List(ListArgs),
+            /// Change version of a package
             #[clap(visible_alias = "b")]
             Bump(BumpArgs),
         }
