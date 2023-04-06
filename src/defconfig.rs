@@ -81,9 +81,9 @@ impl FromStr for Symbol {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         lazy_static! {
-            static ref SYMBOL_SET: Regex = Regex::new(r"(BR2_[a-zA-Z0-9_]+)=(.+)").unwrap();
+            static ref SYMBOL_SET: Regex = Regex::new(r"(BR2_[a-zA-Z0-9_.]+)=(.+)").unwrap();
             static ref SYMBOL_NOTSET: Regex =
-                Regex::new(r"# (BR2_[a-zA-Z0-9_]+) is not set").unwrap();
+                Regex::new(r"# (BR2_[a-zA-Z0-9_.]+) is not set").unwrap();
         }
 
         if let Some(caps) = SYMBOL_SET.captures(s) {
