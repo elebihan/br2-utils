@@ -57,6 +57,18 @@ impl FromStr for SymbolValue {
     }
 }
 
+impl std::fmt::Display for SymbolValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SymbolValue::Bool(v) => {
+                let v = if *v { "y" } else { "n" };
+                write!(f, "{}", v)
+            }
+            SymbolValue::String(v) => write!(f, "{}", v),
+        }
+    }
+}
+
 /// Represent a symbol in a `Defconfig`.
 #[derive(Debug, PartialEq)]
 pub struct Symbol {
