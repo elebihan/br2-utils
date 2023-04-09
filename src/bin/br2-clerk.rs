@@ -55,19 +55,9 @@ pub fn main() -> Result<()> {
 
 mod topics {
     pub mod defconfig {
-        use br2_utils::{BuildMode, Buildroot, Error};
+        use br2_utils::{Buildroot, Error};
         use clap::{Args, Subcommand};
-        use std::{collections::BTreeSet, path::PathBuf};
-
-        #[derive(Debug, Args)]
-        struct BuildArgs {
-            #[arg(short, long, help = "Build mode", default_value_t = BuildMode::Full)]
-            mode: BuildMode,
-            #[arg(help = "Name of the defconfig")]
-            name: String,
-            #[arg(help = "Path to output directory")]
-            output: PathBuf,
-        }
+        use std::collections::BTreeSet;
 
         #[derive(Debug, Args)]
         struct GetArgs {
@@ -79,9 +69,6 @@ mod topics {
 
         #[derive(Debug, Subcommand)]
         enum DefconfigCommand {
-            /// Build an embedded system using a defconfig
-            #[clap(visible_alias = "b")]
-            Build(BuildArgs),
             /// Get value of a symbol
             #[clap(visible_alias = "g")]
             Get(GetArgs),
@@ -99,9 +86,6 @@ mod topics {
         impl Defconfig {
             pub fn execute(&self, buildroot: &Buildroot) -> Result<(), Error> {
                 match self.command {
-                    DefconfigCommand::Build(ref args) => {
-                        buildroot.build_defconfig(&args.name, &args.output, args.mode)
-                    }
                     DefconfigCommand::Get(ref args) => {
                         let defconfig = buildroot.get_defconfig(&args.name)?;
                         let symbol = defconfig
