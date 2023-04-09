@@ -8,6 +8,7 @@
 
 //! Provide helpers to handle a [Buildroot](https://buildroot.org) environment.
 
+pub mod builder;
 mod buildroot;
 pub mod defconfig;
 pub mod package;
