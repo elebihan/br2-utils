@@ -10,11 +10,14 @@ use anyhow::{Context, Result};
 use br2_utils::BuildrootExplorer;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use topics::build::Build;
 use topics::defconfig::Defconfig;
 use topics::package::Package;
 
 #[derive(Debug, Subcommand)]
 enum Topic {
+    #[clap(visible_aliases = ["b", "bld"])]
+    Build(Build),
     #[clap(visible_aliases = ["d", "def"])]
     Defconfig(Defconfig),
     #[clap(visible_aliases = ["p", "pkg"])]
@@ -47,6 +50,7 @@ pub fn main() -> Result<()> {
         .explore()
         .with_context(|| "Failed to explore environment")?;
     match args.topic {
+        Topic::Build(ref topic) => topic.execute(&buildroot)?,
         Topic::Defconfig(ref topic) => topic.execute(&buildroot)?,
         Topic::Package(ref topic) => topic.execute(&buildroot)?,
     }
@@ -54,20 +58,48 @@ pub fn main() -> Result<()> {
 }
 
 mod topics {
-    pub mod defconfig {
-        use br2_utils::{BuildMode, Buildroot, Error};
+    pub mod build {
+        use br2_utils::{builder::BuildStep, Buildroot, Error};
         use clap::{Args, Subcommand};
-        use std::{collections::BTreeSet, path::PathBuf};
+        use std::path::PathBuf;
 
         #[derive(Debug, Args)]
-        struct BuildArgs {
-            #[arg(short, long, help = "Build mode", default_value_t = BuildMode::Full)]
-            mode: BuildMode,
+        struct RunArgs {
+            #[arg(short, long, help = "Build step", default_value_t = BuildStep::All)]
+            step: BuildStep,
             #[arg(help = "Name of the defconfig")]
             name: String,
             #[arg(help = "Path to output directory")]
             output: PathBuf,
         }
+
+        #[derive(Debug, Subcommand)]
+        enum BuildCommand {
+            /// Build an embedded system using a defconfig
+            #[clap(visible_alias = "r")]
+            Run(RunArgs),
+        }
+
+        #[derive(Debug, Args)]
+        pub struct Build {
+            #[command(subcommand)]
+            command: BuildCommand,
+        }
+
+        impl Build {
+            pub fn execute(&self, buildroot: &Buildroot) -> Result<(), Error> {
+                match self.command {
+                    BuildCommand::Run(ref args) => {
+                        buildroot.build(&args.name, &args.output, args.step)
+                    }
+                }
+            }
+        }
+    }
+    pub mod defconfig {
+        use br2_utils::{Buildroot, Error};
+        use clap::{Args, Subcommand};
+        use std::collections::BTreeSet;
 
         #[derive(Debug, Args)]
         struct GetArgs {
@@ -79,9 +111,6 @@ mod topics {
 
         #[derive(Debug, Subcommand)]
         enum DefconfigCommand {
-            /// Build an embedded system using a defconfig
-            #[clap(visible_alias = "b")]
-            Build(BuildArgs),
             /// Get value of a symbol
             #[clap(visible_alias = "g")]
             Get(GetArgs),
@@ -99,9 +128,6 @@ mod topics {
         impl Defconfig {
             pub fn execute(&self, buildroot: &Buildroot) -> Result<(), Error> {
                 match self.command {
-                    DefconfigCommand::Build(ref args) => {
-                        buildroot.build_defconfig(&args.name, &args.output, args.mode)
-                    }
                     DefconfigCommand::Get(ref args) => {
                         let defconfig = buildroot.get_defconfig(&args.name)?;
                         let symbol = defconfig
