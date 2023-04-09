@@ -10,7 +10,6 @@ use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
@@ -32,8 +31,6 @@ const BUILDROOT_SUBDIRS: [&str; 8] = [
 /// Errors reported when processing a Buildroot environment.
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Build error: {0}")]
-    Build(String),
     #[error("Defconfig error: {0}")]
     Defconfig(#[from] defconfig::Error),
     #[error("Directory traversal error: {0}")]
@@ -192,40 +189,6 @@ impl BuildrootTree {
     }
 }
 
-/// Represent a build mode
-#[derive(Debug, Clone, Copy)]
-pub enum BuildMode {
-    /// Initialize a build using defconfig
-    Init,
-    /// Continue a previously initialized build
-    Continue,
-    /// Initialize and build
-    Full,
-}
-
-impl FromStr for BuildMode {
-    type Err = self::Error;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "init" => Ok(BuildMode::Init),
-            "continue" => Ok(BuildMode::Continue),
-            "full" => Ok(BuildMode::Full),
-            _ => Err(Error::Build("invlaid mode".to_string())),
-        }
-    }
-}
-
-impl std::fmt::Display for BuildMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            BuildMode::Init => write!(f, "init"),
-            BuildMode::Continue => write!(f, "continue"),
-            BuildMode::Full => write!(f, "full"),
-        }
-    }
-}
-
 /// Represent a Buildroot environment, with all defconfigs and packages.
 #[derive(Debug)]
 pub struct Buildroot {
@@ -278,53 +241,6 @@ impl Buildroot {
             .find(|(n, _)| n.as_str() == name)
             .ok_or(Error::UnknownDefconfig(name.to_string()))
             .and_then(|(_, p)| Ok(defconfig::Defconfig::from_path(p)?))
-    }
-
-    /// Build an embedded system using a defconfig
-    pub fn build_defconfig<P: AsRef<Path>>(
-        &self,
-        name: &str,
-        output: P,
-        mode: BuildMode,
-    ) -> Result<(), Error> {
-        let main_path = self.main_tree_path();
-        let ext_paths = self.trees.iter().skip(1).filter_map(|t| {
-            if let BuildrootTree::External(_, b) = t {
-                Some(&b.path)
-            } else {
-                None
-            }
-        });
-        let mut cmd = std::process::Command::new("make");
-        let ext_opt: String = ext_paths.fold(String::new(), |a, p| {
-            a + ":" + &p.as_os_str().to_string_lossy()
-        });
-        if !ext_opt[1..].is_empty() {
-            cmd.arg(format!("BR2_EXTERNAL={}", &ext_opt[1..]));
-        }
-        match mode {
-            BuildMode::Init => cmd.arg(name),
-            BuildMode::Continue => cmd.arg("all"),
-            BuildMode::Full => cmd.arg(name).arg("all"),
-        };
-        let status = cmd
-            .arg("-C")
-            .arg(main_path.as_os_str())
-            .arg(format!("O={}", output.as_ref().display()))
-            .status()?;
-        status
-            .success()
-            .then_some(())
-            .ok_or(Error::Build("build failed".to_string()))
-    }
-
-    /// Return the path to the main tree
-    fn main_tree_path(&self) -> &Path {
-        if let BuildrootTree::Main(m) = &self.trees[0] {
-            m.path.as_path()
-        } else {
-            unreachable!()
-        }
     }
 }
 
