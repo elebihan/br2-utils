@@ -14,8 +14,11 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
-use super::package;
-use crate::defconfig::{self, Defconfig};
+use super::{
+    builder::{self, BuildStep, Builder},
+    defconfig::{self, Defconfig},
+    package,
+};
 
 const BUILDROOT_SUBDIRS: [&str; 8] = [
     "board",
@@ -31,6 +34,8 @@ const BUILDROOT_SUBDIRS: [&str; 8] = [
 /// Errors reported when processing a Buildroot environment.
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Build error: {0}")]
+    Build(#[from] builder::Error),
     #[error("Defconfig error: {0}")]
     Defconfig(#[from] defconfig::Error),
     #[error("Directory traversal error: {0}")]
@@ -241,6 +246,55 @@ impl Buildroot {
             .find(|(n, _)| n.as_str() == name)
             .ok_or(Error::UnknownDefconfig(name.to_string()))
             .and_then(|(_, p)| Ok(defconfig::Defconfig::from_path(p)?))
+    }
+
+    /// Create a builder for a given defconfig
+    pub fn create_builder<P: AsRef<Path>>(&self, name: &str, output: P) -> Result<Builder, Error> {
+        let defconfig = self
+            .defconfigs()
+            .find(|(n, _)| n.as_str() == name)
+            .ok_or(Error::UnknownDefconfig(name.to_string()))
+            .map(|(_, p)| p.into())?;
+        let main = self.main_tree_path().to_path_buf();
+        let externals = self
+            .trees
+            .iter()
+            .skip(1)
+            .filter_map(|t| {
+                if let BuildrootTree::External(_, t) = t {
+                    Some(t.path.to_path_buf())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(Builder {
+            defconfig,
+            output: output.as_ref().to_path_buf(),
+            main,
+            externals,
+        })
+    }
+
+    /// Build an embedded firmware
+    pub fn build<P: AsRef<Path>>(
+        &self,
+        name: &str,
+        output: P,
+        step: BuildStep,
+    ) -> Result<(), Error> {
+        let builder = self.create_builder(name, output)?;
+        builder.run_step(step)?;
+        Ok(())
+    }
+
+    /// Return the path to the main tree
+    fn main_tree_path(&self) -> &Path {
+        if let BuildrootTree::Main(m) = &self.trees[0] {
+            m.path.as_path()
+        } else {
+            unreachable!()
+        }
     }
 }
 
