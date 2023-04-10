@@ -8,9 +8,10 @@
 
 //! Provide helpers for building using a defconfig.
 
+use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str::FromStr};
-
 use thiserror::Error;
+use toml;
 
 /// Errors reported when performing a build
 #[derive(Debug, Error)]
@@ -21,10 +22,14 @@ pub enum Error {
     InvalidStep,
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("TOML deserialization error: {0}")]
+    TomlDeserialize(#[from] toml::de::Error),
+    #[error("TOML serialization error: {0}")]
+    TomlSerialize(#[from] toml::ser::Error),
 }
 
 /// Represent a Buildroot builder
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Builder {
     pub(crate) defconfig: PathBuf,
     pub(crate) output: PathBuf,
@@ -102,5 +107,17 @@ impl Builder {
         }
         let status = cmd.status()?;
         status.success().then_some(()).ok_or(Error::BuildFailed)
+    }
+
+    /// Deserialize a builder from TOML
+    pub fn from_toml(s: &str) -> Result<Self, Error> {
+        let builder = toml::from_str(s)?;
+        Ok(builder)
+    }
+
+    /// Serialize a builder to TOML
+    pub fn to_toml(&self) -> Result<String, Error> {
+        let text = toml::to_string(&self)?;
+        Ok(text)
     }
 }
