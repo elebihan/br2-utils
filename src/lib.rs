@@ -11,6 +11,7 @@
 pub mod builder;
 mod buildroot;
 pub mod defconfig;
+pub mod mason;
 pub mod package;
 
 pub use buildroot::*;
