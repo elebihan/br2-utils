@@ -83,7 +83,7 @@ impl Builder {
     }
 
     /// Build a list of targets specified by name
-    pub fn build_targets(&self, targets: &[&str]) -> Result<(), Error> {
+    pub fn build_targets<S: AsRef<str>>(&self, targets: &[S]) -> Result<(), Error> {
         let mut cmd = std::process::Command::new("make");
         let external: String = self.externals.iter().fold(String::new(), |a, p| {
             a + ":" + &p.as_os_str().to_string_lossy()
@@ -98,7 +98,7 @@ impl Builder {
             .arg(output)
             .arg(defconfig);
         for target in targets {
-            cmd.arg(target);
+            cmd.arg(target.as_ref());
         }
         let status = cmd.status()?;
         status.success().then_some(()).ok_or(Error::BuildFailed)
