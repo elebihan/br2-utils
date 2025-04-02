@@ -31,7 +31,7 @@ pub enum Error {
 }
 
 /// Value of a symbol in a `Defconfig`.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SymbolValue {
     Bool(bool),
     String(String),
@@ -70,7 +70,7 @@ impl std::fmt::Display for SymbolValue {
 }
 
 /// Represent a symbol in a `Defconfig`.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Symbol {
     pub name: String,
     pub value: SymbolValue,
