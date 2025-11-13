@@ -1,0 +1,25 @@
+[package]
+name = "br2-utils"
+version = "0.2.0"
+edition = "2021"
+authors = ["Eric Le Bihan <eric.le.bihan.dev@free.fr>"]
+license = "MIT"
+
+[dependencies]
+lazy_static = "1.4.0"
+regex = "1.7.3"
+thiserror = "1.0.40"
+
+tempfile = "3.23.0"
+walkdir = "2.3.3"
+clap = { version = "4.2.1", features = ["derive"] }
+anyhow = "1.0.70"
+dirs = "5.0.0"
+toml = "0.7.3"
+serde = { version = "1.0.159", features = ["derive"] }
+
+[[bin]]
+name = "br2-clerk"
+
+[[bin]]
+name = "br2-mason"
