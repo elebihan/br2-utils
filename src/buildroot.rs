@@ -338,7 +338,7 @@ mod tests {
     use super::*;
     use std::fs;
     use std::path::Path;
-    use tempdir::TempDir;
+    use tempfile::Builder;
 
     const TEMPLATE_PACKAGE: &str = r##"
 @NAME@_VERSION = 1.2.3
@@ -396,7 +396,7 @@ BR2_PACKAGE_FOO=y
 
     #[test]
     fn check_valid_buildroot() {
-        let path = TempDir::new(BUILDROOT_TEST_DIR).unwrap();
+        let path = Builder::new().prefix(BUILDROOT_TEST_DIR).tempdir().unwrap();
         mock_tree(&path).unwrap();
         let res = BuildrootExplorer::new(&path).explore();
         let buildroot = res.unwrap();
@@ -410,7 +410,7 @@ BR2_PACKAGE_FOO=y
 
     #[test]
     fn get_package_version() {
-        let path = TempDir::new(BUILDROOT_TEST_DIR).unwrap();
+        let path = Builder::new().prefix(BUILDROOT_TEST_DIR).tempdir().unwrap();
         mock_tree(&path).unwrap();
         let buildroot = BuildrootExplorer::new(&path).explore().unwrap();
         assert_eq!(buildroot.get_package_version("foo").unwrap(), "1.2.3");
@@ -418,7 +418,7 @@ BR2_PACKAGE_FOO=y
 
     #[test]
     fn bump_package_version() {
-        let path = TempDir::new(BUILDROOT_TEST_DIR).unwrap();
+        let path = Builder::new().prefix(BUILDROOT_TEST_DIR).tempdir().unwrap();
         mock_tree(&path).unwrap();
         let buildroot = BuildrootExplorer::new(&path).explore().unwrap();
         let res = buildroot.set_package_version("foo", "3.2.1");
@@ -427,7 +427,7 @@ BR2_PACKAGE_FOO=y
 
     #[test]
     fn check_package_not_selected() {
-        let path = TempDir::new(BUILDROOT_TEST_DIR).unwrap();
+        let path = Builder::new().prefix(BUILDROOT_TEST_DIR).tempdir().unwrap();
         mock_tree(&path).unwrap();
         let buildroot = BuildrootExplorer::new(&path).explore().unwrap();
         let res = buildroot.get_defconfig("acme_quux_defconfig");
