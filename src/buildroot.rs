@@ -164,6 +164,7 @@ impl BuildrootBaseTree {
 #[derive(Debug)]
 enum BuildrootTree {
     Main(BuildrootBaseTree),
+    #[allow(unused)]
     External(String, BuildrootBaseTree),
 }
 

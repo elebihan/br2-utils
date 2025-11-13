@@ -57,7 +57,7 @@ impl Mason {
             .filter_map(|e| e.ok())
             .map(|e| e.path())
             .filter_map(|p| {
-                if p.extension().map_or(false, |e| e == "toml") {
+                if p.extension().is_some_and(|e| e == "toml") {
                     Some(p)
                 } else {
                     None
