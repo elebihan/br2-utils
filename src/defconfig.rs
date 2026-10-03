@@ -34,6 +34,7 @@ pub enum Error {
 #[derive(Clone, Debug, PartialEq)]
 pub enum SymbolValue {
     Bool(bool),
+    Int(i32),
     String(String),
 }
 
@@ -48,7 +49,9 @@ impl FromStr for SymbolValue {
                 .to_string();
             return Ok(SymbolValue::String(s));
         }
-
+        if let Ok(v) = s.parse::<i32>() {
+            return Ok(SymbolValue::Int(v));
+        }
         match s {
             "y" => Ok(SymbolValue::Bool(true)),
             "n" => Ok(SymbolValue::Bool(false)),
@@ -64,6 +67,7 @@ impl std::fmt::Display for SymbolValue {
                 let v = if *v { "y" } else { "n" };
                 write!(f, "{}", v)
             }
+            SymbolValue::Int(v) => write!(f, "{}", v),
             SymbolValue::String(v) => write!(f, "{}", v),
         }
     }
@@ -162,6 +166,7 @@ BR2_i386=y
 BR2_PACKAGE_FOO=y
 BR2_PACKAGE_FOO_BAR="1.2.3"
 # BR2_PACKAGE_QUUX is not set
+BR2_PACKAGE_FROB=1234
 "#;
 
     fn reference_defconfig() -> Defconfig {
@@ -182,6 +187,10 @@ BR2_PACKAGE_FOO_BAR="1.2.3"
                 Symbol {
                     name: "BR2_PACKAGE_QUUX".to_string(),
                     value: SymbolValue::Bool(false),
+                },
+                Symbol {
+                    name: "BR2_PACKAGE_FROB".to_string(),
+                    value: SymbolValue::Int(1234),
                 },
             ],
         }
